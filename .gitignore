@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Build and packaging
+build/
+dist/
+*.egg-info/
+
+# Local app data
+lyrics_data.db
+*.sqlite
+*.sqlite3
+
+# Exports
+*.png
+*.pdf
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
