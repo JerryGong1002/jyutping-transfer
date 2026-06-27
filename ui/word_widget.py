@@ -7,11 +7,92 @@ Handles both CJK characters and grouped English word tokens.
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QMenu, QSizePolicy
 )
-from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QFont, QCursor, QFontMetrics
+from PySide6.QtCore import Qt, Signal, QSize, QPointF
+from PySide6.QtGui import QFont, QCursor, QFontMetrics, QPainter, QPen
 
 from core.converter import LyricsToken
+from core.tone_marks import TONE_LINE_LEVELS, split_tone
 from ui.styles import COLORS, WORD_WIDGET_NORMAL, WORD_WIDGET_POLYPHONIC, SPACING_MODES, FONTS
+
+
+class ToneMarkLabel(QLabel):
+    """QLabel that can draw Jyutping tone numbers as corner tone-line marks."""
+
+    def __init__(self, text: str = "", parent=None, tone_marks_enabled: bool = False):
+        super().__init__(text, parent)
+        self._tone_marks_enabled = tone_marks_enabled
+
+    def set_tone_marks_enabled(self, enabled: bool):
+        self._tone_marks_enabled = enabled
+        self.update()
+
+    def paintEvent(self, event):
+        parts = split_tone(self.text()) if self._tone_marks_enabled else None
+        if not parts:
+            super().paintEvent(event)
+            return
+
+        base, tone = parts
+        line_levels = TONE_LINE_LEVELS.get(tone)
+        if not line_levels:
+            super().paintEvent(event)
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+
+        color = self.palette().color(self.foregroundRole())
+        base_font = self.font()
+        base_metrics = QFontMetrics(base_font)
+        digit_font = self._scaled_font(base_font, 0.72)
+        digit_metrics = QFontMetrics(digit_font)
+
+        base_width = base_metrics.horizontalAdvance(base)
+        digit_width = digit_metrics.horizontalAdvance(tone)
+        mark_width = max(4, int(digit_metrics.height() * 0.58))
+        gap = max(1, int(base_metrics.height() * 0.06))
+        group_width = base_width + gap + mark_width + gap + digit_width
+
+        rect = self.contentsRect()
+        x = rect.x() + (rect.width() - group_width) / 2
+        base_y = rect.y() + (rect.height() - base_metrics.height()) / 2 + base_metrics.ascent()
+
+        painter.setPen(color)
+        painter.setFont(base_font)
+        painter.drawText(int(round(x)), int(round(base_y)), base)
+
+        mark_x1 = x + base_width + gap
+        mark_x2 = mark_x1 + mark_width
+        digit_x = mark_x2 + gap
+
+        sup_top = max(rect.y(), base_y - base_metrics.ascent())
+        tone_levels = {
+            "top": sup_top + digit_metrics.height() * 0.12,
+            "middle": sup_top + digit_metrics.height() * 0.45,
+            "bottom": sup_top + digit_metrics.height() * 0.78,
+        }
+        y1 = tone_levels[line_levels[0]]
+        y2 = tone_levels[line_levels[1]]
+
+        pen = QPen(color)
+        pen.setWidthF(max(1.0, base_metrics.height() * 0.08))
+        pen.setCapStyle(Qt.PenCapStyle.FlatCap)
+        painter.setPen(pen)
+        painter.drawLine(QPointF(mark_x1, y1), QPointF(mark_x2, y2))
+
+        painter.setPen(color)
+        painter.setFont(digit_font)
+        digit_y = sup_top + digit_metrics.ascent()
+        painter.drawText(int(round(digit_x)), int(round(digit_y)), tone)
+
+    def _scaled_font(self, font: QFont, factor: float) -> QFont:
+        scaled = QFont(font)
+        if scaled.pointSizeF() > 0:
+            scaled.setPointSizeF(max(1.0, scaled.pointSizeF() * factor))
+        elif scaled.pixelSize() > 0:
+            scaled.setPixelSize(max(1, int(scaled.pixelSize() * factor)))
+        return scaled
 
 
 class WordWidget(QWidget):
@@ -23,11 +104,19 @@ class WordWidget(QWidget):
 
     jyutping_changed = Signal(int, str)  # (token_index, new_jyutping)
 
-    def __init__(self, token: LyricsToken, parent=None, spacing_mode: str = "wide", font_mode: str = "apple"):
+    def __init__(
+        self,
+        token: LyricsToken,
+        parent=None,
+        spacing_mode: str = "wide",
+        font_mode: str = "apple",
+        tone_marks_enabled: bool = False,
+    ):
         super().__init__(parent)
         self.token = token
         self._spacing_mode = spacing_mode
         self._font_mode = font_mode
+        self._tone_marks_enabled = tone_marks_enabled
         self.setObjectName("word_widget")
         self._setup_ui()
         self._apply_style()
@@ -67,7 +156,10 @@ class WordWidget(QWidget):
             self._char_label.setStyleSheet(f"color: {COLORS['text_muted']};")
         else:
             # Jyutping label (small, on top, narrow Latin font)
-            self._jyutping_label = QLabel(self.token.current_jyutping or "")
+            self._jyutping_label = ToneMarkLabel(
+                self.token.current_jyutping or "",
+                tone_marks_enabled=self._tone_marks_enabled
+            )
             self._jyutping_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
             j_font = QFont("Arial")
