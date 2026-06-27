@@ -4,6 +4,7 @@ SQLite Database Layer for persisting history and favorites.
 
 import sqlite3
 import os
+import sys
 from datetime import datetime
 from typing import Optional
 
@@ -20,8 +21,16 @@ class LyricsDatabase:
                      Defaults to 'lyrics_data.db' in the app directory.
         """
         if db_path is None:
-            # Store database in the same directory as the script
-            app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            # Source runs keep the database next to the project. Frozen builds use
+            # a persistent user data folder instead of PyInstaller's temp folder.
+            if getattr(sys, "frozen", False):
+                app_dir = os.path.join(
+                    os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+                    "JyutpingTransfer",
+                )
+                os.makedirs(app_dir, exist_ok=True)
+            else:
+                app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             db_path = os.path.join(app_dir, 'lyrics_data.db')
 
         self.db_path = db_path
