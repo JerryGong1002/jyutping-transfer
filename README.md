@@ -1,6 +1,6 @@
 # Jyutping Transfer
 
-**Version / 版本：1.0.0**
+**Version / 版本：1.1.0**
 
 Jyutping Transfer is a desktop tool for annotating Cantonese lyrics with Jyutping. It converts Chinese lyrics into editable Jyutping tokens, highlights polyphonic characters, keeps local history and favorites, and exports annotated lyrics as PNG or PDF files.
 
@@ -13,6 +13,7 @@ Jyutping Transfer 是一个用于粤语歌词粤拼标注的桌面工具。它�
 - Simplified/Traditional Chinese conversion through OpenCC.
 - Local history and favorites powered by SQLite.
 - Adjustable font, character spacing, and line spacing.
+- Optional tone-line marks with corner tone digits for Jyutping syllables.
 - Export annotated lyrics to high-resolution PNG or PDF.
 
 - 自动为粤语歌词生成粤拼注音。
@@ -20,6 +21,7 @@ Jyutping Transfer 是一个用于粤语歌词粤拼标注的桌面工具。它�
 - 通过 OpenCC 支持简繁转换。
 - 使用 SQLite 保存本地历史记录与收藏。
 - 可调整字体、字间距和行距。
+- 可选音调标线，在粤拼右上角显示直线声调与数字角标。
 - 可将注音歌词导出为高清 PNG 或 PDF。
 
 ## Requirements / 环境要求
@@ -52,9 +54,9 @@ If you use PowerShell and script execution is blocked, activate the environment 
 python main.py
 ```
 
-Then paste or type Cantonese lyrics, choose the conversion/font/spacing options you need, and click **开始转换**. Click highlighted polyphonic characters to choose another Jyutping reading. After conversion, you can save the result to favorites or export it as PNG/PDF.
+Then paste or type Cantonese lyrics, choose the conversion/font/spacing/tone-line options you need, and click **开始转换**. Click highlighted polyphonic characters to choose another Jyutping reading. After conversion, you can save the result to favorites or export it as PNG/PDF.
 
-启动后粘贴或输入粤语歌词，按需要选择简繁转换、字体、字间距与行距，然后点击 **开始转换**。高亮的多音字可以点击并切换读音。转换完成后，可收藏结果，或导出为 PNG/PDF。
+启动后粘贴或输入粤语歌词，按需要选择简繁转换、字体、字间距、行距与音调标线，然后点击 **开始转换**。高亮的多音字可以点击并切换读音。转换完成后，可收藏结果，或导出为 PNG/PDF。
 
 ## Project Structure / 项目结构
 
