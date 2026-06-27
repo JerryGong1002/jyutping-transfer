@@ -99,6 +99,7 @@ class MainWindow(QMainWindow):
         self._input_panel.export_pdf_requested.connect(self._on_export_pdf)
         self._input_panel.spacing_mode_changed.connect(self._on_spacing_mode_changed)
         self._input_panel.font_mode_changed.connect(self._on_font_mode_changed)
+        self._input_panel.tone_marks_changed.connect(self._on_tone_marks_changed)
 
         # Result panel signals
         self._result_panel.token_changed.connect(self._on_token_changed)
@@ -133,6 +134,10 @@ class MainWindow(QMainWindow):
         """Switch the result panel font live."""
         self._result_panel.set_font_mode(mode)
 
+    def _on_tone_marks_changed(self, enabled: bool):
+        """Switch Jyutping tone-line rendering live."""
+        self._result_panel.set_tone_marks_enabled(enabled)
+
     # ──────────────────── Conversion ────────────────────
 
     def _on_convert(self, text: str, cc_mode: str):
@@ -146,6 +151,7 @@ class MainWindow(QMainWindow):
 
             # Apply current spacing mode
             self._result_panel.set_spacing_mode(self._input_panel.get_spacing_mode())
+            self._result_panel.set_tone_marks_enabled(self._input_panel.get_tone_marks_enabled())
             self._result_panel.render_tokens(tokens)
             self._input_panel.set_export_enabled(True)
 
@@ -207,6 +213,7 @@ class MainWindow(QMainWindow):
             tokens = tokens_from_json(entry['converted_json'])
             self._current_tokens = tokens
             self._result_panel.set_spacing_mode(self._input_panel.get_spacing_mode())
+            self._result_panel.set_tone_marks_enabled(self._input_panel.get_tone_marks_enabled())
             self._result_panel.render_tokens(tokens)
             self._input_panel.set_export_enabled(True)
 
@@ -235,7 +242,7 @@ class MainWindow(QMainWindow):
 
     # ──────────────────── Export ────────────────────
 
-    def _on_export_png(self, font_mode: str, spacing: float, spacing_mode: str):
+    def _on_export_png(self, font_mode: str, spacing: float, spacing_mode: str, tone_marks_enabled: bool):
         if not self._current_tokens:
             QMessageBox.information(self, "提示", "请先转换歌词后再导出。")
             return
@@ -259,7 +266,8 @@ class MainWindow(QMainWindow):
                     font_mode=font_mode,
                     line_spacing_multiplier=spacing,
                     spacing_mode=spacing_mode,
-                    title=export_title
+                    title=export_title,
+                    tone_marks_enabled=tone_marks_enabled
                 )
                 self.statusBar().showMessage(f"图片已导出至 {file_path}")
                 QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
@@ -269,7 +277,7 @@ class MainWindow(QMainWindow):
                 f"导出图片时发生错误：\n{str(e)}"
             )
 
-    def _on_export_pdf(self, font_mode: str, spacing: float, spacing_mode: str):
+    def _on_export_pdf(self, font_mode: str, spacing: float, spacing_mode: str, tone_marks_enabled: bool):
         if not self._current_tokens:
             QMessageBox.information(self, "提示", "请先转换歌词后再导出。")
             return
@@ -293,7 +301,8 @@ class MainWindow(QMainWindow):
                     font_mode=font_mode,
                     line_spacing_multiplier=spacing,
                     spacing_mode=spacing_mode,
-                    title=export_title
+                    title=export_title,
+                    tone_marks_enabled=tone_marks_enabled
                 )
                 self.statusBar().showMessage(f"PDF已导出至 {file_path}")
                 QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
