@@ -30,6 +30,7 @@ class ResultPanel(QWidget):
         self._word_widgets: list[WordWidget] = []
         self._spacing_mode = "wide"
         self._font_mode = "apple"
+        self._tone_marks_enabled = False
         self._setup_ui()
 
     def _setup_ui(self):
@@ -109,6 +110,14 @@ class ResultPanel(QWidget):
         if self._tokens:
             self.render_tokens(self._tokens)
 
+    def set_tone_marks_enabled(self, enabled: bool):
+        """Toggle tone-line annotations and re-render if tokens exist."""
+        if enabled == self._tone_marks_enabled:
+            return
+        self._tone_marks_enabled = enabled
+        if self._tokens:
+            self.render_tokens(self._tokens)
+
     def render_tokens(self, tokens: list[LyricsToken]):
         """Render a list of LyricsToken objects as WordWidgets in the flow layout."""
         self._flow_layout.clear()
@@ -131,7 +140,8 @@ class ResultPanel(QWidget):
                 ww = WordWidget(
                     token, self._flow_container,
                     spacing_mode=self._spacing_mode,
-                    font_mode=self._font_mode
+                    font_mode=self._font_mode,
+                    tone_marks_enabled=self._tone_marks_enabled
                 )
                 ww.jyutping_changed.connect(self._on_jyutping_changed)
                 self._flow_layout.addWidget(ww)
